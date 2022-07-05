@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "experimentalDecorators": true,
+    "jsx": "react",
+    "lib": ["es2019", "dom"],
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "outDir": ".dist/",
+    "sourceMap": true,
+    "target": "ES2019",
+    "allowJs": true
+  }
+}
