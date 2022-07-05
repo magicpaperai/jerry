@@ -12,7 +12,13 @@ module.exports = {
     filename: "[name].js"
   },
   module: {
-    rules: []
+    rules: [
+      {
+        exclude: /node_modules/,
+        test: /\.tsx?$/,
+        use: "ts-loader"
+      }
+    ]
   },
   mode: 'production',
   resolve: {
