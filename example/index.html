@@ -4,17 +4,22 @@
     <title>Jerry Example</title>
     <meta charset="utf-8" />
     <script type="text/javascript" src="../dist/index.js"></script>
+    <style>
+      .highlight {
+        background: yellow;
+      }
+    </style>
   </head>
   <body>
-    <h1>Header</h1>
+    <h1>Jerry</h1>
     <p>Some text content in a paragraph element.</p>
     <p>A second paragraph with some <em>content</em> in it as well.</p>
-    <button id="capture">Capture Selection</button>
+    <button id="capture">Highlight Selection</button>
     <script type="text/javascript">
-      const jerry = new Jerry()
-      window.addEventListener('load', () => jerry.init())
       document.querySelector('#capture').addEventListener('mousedown', evt => {
-        console.log('selection', jerry.getSelection())
+        const map = new Jerry()
+        const sel = map.getSelection()
+        sel.wrap('highlight')
       })
     </script>
   </body>

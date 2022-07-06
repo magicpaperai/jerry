@@ -1,51 +1,115 @@
 import _ from 'lodash'
 
-type JerryAddress = {start: number; end: number}
-type JerryMap = Map<Node, JerryAddress>
-type JerryNode = {span: JerryAddress; map: JerryMap}
+function getNodeMap(root, node, offset = 0): {span: Address, map: Map<Node, Address>} {
+  if (!node && root) return getNodeMap(root, root, offset)
+  if (node.nodeType === 3) {
+    const address = new Address(root, offset, offset + node.length)
+    const leafMap = new Map()
+    leafMap.set(node, address)
+    return {span: address, map: leafMap}
+  }
+  if (!node?.childNodes) {
+    const address = new Address(root, offset, offset)
+    const leafMap = new Map()
+    leafMap.set(node, address)
+    return {span: address, map: leafMap}
+  }
+
+  let children = []
+  let scanOffset = offset
+  Array.from(node.childNodes).forEach(node => {
+    const {span, map} = getNodeMap(root, node, scanOffset)
+    children.push(map)
+    scanOffset = span.end
+  })
+  return {
+    span: new Address(root, offset, scanOffset),
+    map: new Map(_.flatMap(children, m => Array.from(m || []))),
+  }
+}
+
+class Address {
+  root: Node
+  start: number
+  end: number
+
+  constructor(root: Node, start: number, end: number) {
+    this.root = root
+    this.start = start
+    this.end = end
+  }
+
+  toLeafs(): Address[] {
+    const {map} = getNodeMap(this.root)
+    const inverse = _.chain(Array.from(map))
+      .filter(x => x[1].start !== x[1].end)
+      .sortBy(x => x[1].start).value()
+    const startItem = _.findLast(inverse, x => x[1].start <= this.start)
+    const startIndex = inverse.indexOf(startItem)
+    const [startNode, startSpan] = startItem
+    const endItem = _.find(inverse, x => x[1].end >= this.end)
+    const endIndex = inverse.indexOf(endItem)
+    const [endNode, endSpan] = endItem
+    const startSpot = this.start - startSpan.start
+    const endSpot = this.end - endSpan.start
+    if (startNode === endNode) return [new Address(startNode, startSpot, endSpot)]
+    return [
+      new Address(startNode, startSpot, startSpan.end - startSpan.start),
+      ...(
+        endIndex > startIndex + 1
+          ? inverse.slice(startIndex + 1, endIndex).map(x =>
+              new Address(x[0], 0, x[1].end - x[1].start)
+          ) : []
+      ),
+      new Address(endNode, 0, endSpot),
+    ]
+  }
+
+  toAtom() {
+    if (!this.isLeaf()) return null
+    if (this.start === 0 && this.end === this.root.length) {
+      return this
+    }
+    const rest = this.root.splitText(this.start)
+    const tail = rest.splitText(this.end - this.start)
+    return new Address(tail.previousSibling, 0, this.end - this.start)
+  }
+
+  isLeaf() {
+    if (this.root.nodeType === 3) return true
+    return !this.root?.childNodes
+  }
+
+  wrap(className = 'highlight') {
+    if (!this.isLeaf()) {
+      this.toLeafs().forEach(leaf => leaf.toAtom().wrap(className))
+    } else {
+      const parentNode = this.root.parentNode
+      const wrapped = document.createElement('span')
+      wrapped.classList.add(className)
+      parentNode.replaceChild(wrapped, this.root)
+      wrapped.appendChild(this.root)
+    }
+  }
+}
 
 class Jerry {
-  bodyMap: JerryMap
-  bodySpan: JerryAddress
+  span: Address
+  map: Map<Node, Address>
+  node: Node
 
-  init() {
-    const {map, span} = Jerry.getNodeMap(document.body)
-    this.bodyMap = map
-    this.bodySpan = span
+  constructor(node = document.body) {
+    const {map, span} = getNodeMap(node)
+    this.node = node
+    this.span = span
+    this.map = map
   }
 
-  static getNodeMap(container, offset = 0): JerryNode {
-    if (container.nodeType === 3) {
-      const address = {start: offset, end: container.length + offset}
-      const leafMap = new Map()
-      leafMap.set(container, address)
-      return {span: address, map: leafMap}
-    }
-    if (!container?.childNodes) {
-      const address = {start: offset, end: offset}
-      const leafMap = new Map()
-      leafMap.set(container, address)
-      return {span: address, map: leafMap}
-    }
-
-    let children = []
-    let scanOffset = offset
-    Array.from(container.childNodes).forEach(node => {
-      const {span, map} = Jerry.getNodeMap(node, scanOffset)
-      children.push(map)
-      scanOffset = span.end
-    })
-    return {
-      span: {start: offset, end: scanOffset},
-      map: new Map(_.flatMap(children, m => Array.from(m || []))),
-    }
+  getNodeAddress(node): Address {
+    return this.map.get(node)
   }
 
-  getNodeAddress(node): JerryAddress {
-    return this.bodyMap.get(node)
-  }
-
-  getSelection(): JerryAddress {
+  getSelection(): Address {
     const sel = window.getSelection()
     if (!sel) return null
     const range = sel.getRangeAt(0)
@@ -53,7 +117,7 @@ class Jerry {
     const start = range.startOffset + startOffset
     const endOffset = this.getNodeAddress(range.endContainer)?.start
     const end = range.endOffset + endOffset
-    return {start, end}
+    return new Address(this.node, start, end)
   }
 }
 
