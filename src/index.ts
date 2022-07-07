@@ -1,6 +1,6 @@
 import _ from 'lodash'
 
-function getNodeMap(root, node, offset = 0): {span: Address, map: Map<Node, Address>} {
+function getNodeMap(root, node = null, offset = 0): {span: Address, map: Map<Node, Address>} {
   if (!node && root) return getNodeMap(root, root, offset)
   if (node.nodeType === 3) {
     const address = new Address(root, offset, offset + node.length)
@@ -28,6 +28,11 @@ function getNodeMap(root, node, offset = 0): {span: Address, map: Map<Node, Addr
   }
 }
 
+function isLeaf(node): node is Text {
+  if (node.nodeType === 3) return true
+  return false
+}
+
 class Address {
   root: Node
   start: number
@@ -40,6 +45,8 @@ class Address {
   }
 
   toLeafs(): Address[] {
+    if (isLeaf(this.root)) return [this]
+    if (!isLeaf(this.root) && !this.root.childNodes) return []
     const {map} = getNodeMap(this.root)
     const inverse = _.chain(Array.from(map))
       .filter(x => x[1].start !== x[1].end)
@@ -66,7 +73,7 @@ class Address {
   }
 
   toAtom() {
-    if (!this.isLeaf()) return null
+    if (!isLeaf(this.root)) return null
     if (this.start === 0 && this.end === this.root.length) {
       return this
     }
@@ -75,14 +82,13 @@ class Address {
     return new Address(tail.previousSibling, 0, this.end - this.start)
   }
 
-  isLeaf() {
-    if (this.root.nodeType === 3) return true
-    return !this.root?.childNodes
+  toAtoms() {
+    return _.compact(this.toLeafs().map(x => x.toAtom()))
   }
 
   wrap(className = 'highlight') {
-    if (!this.isLeaf()) {
-      this.toLeafs().forEach(leaf => leaf.toAtom().wrap(className))
+    if (!isLeaf(this.root)) {
+      this.toAtoms().forEach(atom => atom.wrap(className))
     } else {
       const parentNode = this.root.parentNode
       const wrapped = document.createElement('span')
