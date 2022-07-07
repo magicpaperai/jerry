@@ -91,10 +91,37 @@ class Address {
       this.toAtoms().forEach(atom => atom.wrap(className))
     } else {
       const parentNode = this.root.parentNode
-      const wrapped = document.createElement('span')
-      wrapped.classList.add(className)
-      parentNode.replaceChild(wrapped, this.root)
-      wrapped.appendChild(this.root)
+      if (parentNode.classList.contains(className) && parentNode.childNodes.length === 1) {
+        parentNode.parentNode.replaceChild(this.root, parentNode)
+      } else if (parentNode.classList.contains(className)) {
+        const nodes = Array.from(parentNode.childNodes)
+        const nodeIndex = nodes.indexOf(this.root)
+        const before = nodes.slice(0, nodeIndex)
+        const after = nodes.slice(nodeIndex + 1)
+        parentNode.removeChild(this.root)
+        after.forEach(afterNode => parentNode.removeChild(afterNode))
+        if (parentNode.nextSibling) {
+          parentNode.parentNode.insertBefore(this.root, parentNode.nextSibling)
+        } else {
+          parentNode.parentNode.appendChild(this.root)
+        }
+
+        if (after.length) {
+          const wrapped = document.createElement('span')
+          wrapped.classList.add(className)
+          after.forEach(afterNode => wrapped.appendChild(afterNode))
+          if (this.root.nextSibling) {
+            parentNode.parentNode.insertBefore(wrapped, this.root.nextSibling)
+          } else {
+            parentNode.parentNode.appendChild(wrapped)
+          }
+        }
+      } else {
+        const wrapped = document.createElement('span')
+        wrapped.classList.add(className)
+        parentNode.replaceChild(wrapped, this.root)
+        wrapped.appendChild(this.root)
+      }
     }
   }
 }
