@@ -22,10 +22,20 @@ function getNodeMap(root, node = null, offset = 0): {span: Address, map: Map<Nod
     children.push(map)
     scanOffset = span.end
   })
+
+  const span = new Address(root, offset, scanOffset)
+  const selfMap = new Map()
+  selfMap.set(node, span)
+
   return {
-    span: new Address(root, offset, scanOffset),
-    map: new Map(_.flatMap(children, m => Array.from(m || []))),
+    span,
+    map: new Map(_.flatMap([...children, selfMap], m => Array.from(m || []))),
   }
+}
+
+function getLeafMap(root) {
+  const {map, span} = getNodeMap(root)
+  return {span, map: new Map(Array.from(map).filter(x => x[0].nodeType === 3))}
 }
 
 function isLeaf(node): node is Text {
@@ -47,7 +57,7 @@ class Address {
   toLeafs(): Address[] {
     if (isLeaf(this.root)) return [this]
     if (!isLeaf(this.root) && !this.root.childNodes) return []
-    const {map} = getNodeMap(this.root)
+    const {map} = getLeafMap(this.root)
     const inverse = _.chain(Array.from(map))
       .filter(x => x[1].start !== x[1].end)
       .sortBy(x => x[1].start).value()
@@ -132,8 +142,12 @@ class Jerry {
   node: Node
 
   constructor(node = document.body) {
-    const {map, span} = getNodeMap(node)
     this.node = node
+    this.refresh()
+  }
+
+  refresh() {
+    const {map, span} = getLeafMap(this.node)
     this.span = span
     this.map = map
   }
@@ -151,6 +165,15 @@ class Jerry {
     const endOffset = this.getNodeAddress(range.endContainer)?.start
     const end = range.endOffset + endOffset
     return new Address(this.node, start, end)
+  }
+
+  gatherHighlights(className = 'highlight'): Address[] {
+    const nodes = Array.from(document.querySelectorAll(`.${className}`))
+    const {map} = getNodeMap(this.node)
+    // TODO: merge adjacent addresses
+    return nodes.map(node => {
+      return map.get(node)
+    })
   }
 }
 
