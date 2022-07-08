@@ -68,7 +68,7 @@ class Address {
     return content.substr(this.start, this.end - this.start)
   }
 
-  getHash(): string {
+  getHash(): number {
     return djb2(this.getContent())
   }
 
@@ -191,9 +191,9 @@ class Jerry {
     this.refresh()
     const nodes = Array.from(document.querySelectorAll(`.${className}`))
     // TODO: merge adjacent addresses
-    return nodes.map(node => {
+    return _.compact(nodes.map(node => {
       return this.lookup.get(node)
-    })
+    }))
   }
 }
 
