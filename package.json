@@ -1,6 +1,6 @@
 {
-  "name": "jerry",
-  "version": "1.0.0",
+  "name": "jerrymander",
+  "version": "0.1.0",
   "description": "text content addressing for the web",
   "main": "index.js",
   "scripts": {
@@ -22,7 +22,7 @@
     "webpack-merge": "^5.8.0"
   },
   "author": "Matt Neary",
-  "license": "MIT",
+  "license": "GPLV3",
   "dependencies": {
     "lodash": "^4.17.21",
     "djb2": "^0.0.2"
