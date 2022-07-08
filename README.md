@@ -1,3 +1,3 @@
 # jerry
 
-![jerry](jerry.jpeg)
+![jerry](jerry.svg)
