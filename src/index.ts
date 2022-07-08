@@ -1,41 +1,50 @@
 import _ from 'lodash'
+import djb2 from 'djb2'
 
-function getNodeMap(root, node = null, offset = 0): {span: Address, map: Map<Node, Address>} {
-  if (!node && root) return getNodeMap(root, root, offset)
+type JerryIndex = {
+  pointer: Address,
+  lookup: Map<Node, Address>,
+  content: string
+}
+
+function indexNode(root, node = null, offset = 0): JerryIndex {
+  if (!node && root) return indexNode(root, root, offset)
   if (node.nodeType === 3) {
     const address = new Address(root, offset, offset + node.length)
     const leafMap = new Map()
     leafMap.set(node, address)
-    return {span: address, map: leafMap}
+    return {pointer: address, lookup: leafMap, content: root.textContent}
   }
   if (!node?.childNodes) {
     const address = new Address(root, offset, offset)
     const leafMap = new Map()
     leafMap.set(node, address)
-    return {span: address, map: leafMap}
+    return {pointer: address, lookup: leafMap, content: ''}
   }
 
+  let content = ''
   let children = []
   let scanOffset = offset
   Array.from(node.childNodes).forEach(node => {
-    const {span, map} = getNodeMap(root, node, scanOffset)
-    children.push(map)
-    scanOffset = span.end
+    const {pointer, lookup, content: c} = indexNode(root, node, scanOffset)
+    children.push(lookup)
+    content += c
+    scanOffset = pointer.end
   })
 
-  const span = new Address(root, offset, scanOffset)
+  const pointer = new Address(root, offset, scanOffset)
   const selfMap = new Map()
-  selfMap.set(node, span)
+  selfMap.set(node, pointer)
 
   return {
-    span,
-    map: new Map(_.flatMap([...children, selfMap], m => Array.from(m || []))),
+    pointer,
+    lookup: new Map(_.flatMap([...children, selfMap], m => Array.from(m || []))),
+    content,
   }
 }
 
-function getLeafMap(root) {
-  const {map, span} = getNodeMap(root)
-  return {span, map: new Map(Array.from(map).filter(x => x[0].nodeType === 3))}
+function filterMap<K, V>(map: Map<K, V>, f): Map<K, V> {
+  return new Map(Array.from(map).filter(x => f(x[0], x[1])))
 }
 
 function isLeaf(node): node is Text {
@@ -54,11 +63,22 @@ class Address {
     this.end = end
   }
 
+  getContent(): string {
+    const {content} = indexNode(this.root)
+    return content.substr(this.start, this.end - this.start)
+  }
+
+  getHash(): string {
+    return djb2(this.getContent())
+  }
+
   toLeafs(): Address[] {
     if (isLeaf(this.root)) return [this]
     if (!isLeaf(this.root) && !this.root.childNodes) return []
-    const {map} = getLeafMap(this.root)
-    const inverse = _.chain(Array.from(map))
+    const {lookup} = indexNode(this.root)
+    const leafLookup = filterMap(lookup, isLeaf)
+
+    const inverse = _.chain(Array.from(leafLookup))
       .filter(x => x[1].start !== x[1].end)
       .sortBy(x => x[1].start).value()
     const startItem = _.findLast(inverse, x => x[1].start <= this.start)
@@ -96,11 +116,11 @@ class Address {
     return _.compact(this.toLeafs().map(x => x.toAtom()))
   }
 
-  wrap(className = 'highlight') {
+  highlight(className = 'highlight') {
     if (!isLeaf(this.root)) {
-      this.toAtoms().forEach(atom => atom.wrap(className))
+      this.toAtoms().forEach(atom => atom.highlight(className))
     } else {
-      const parentNode = this.root.parentNode
+      const parentNode = this.root.parentNode as Element
       if (parentNode.classList.contains(className) && parentNode.childNodes.length === 1) {
         parentNode.parentNode.replaceChild(this.root, parentNode)
       } else if (parentNode.classList.contains(className)) {
@@ -137,23 +157,23 @@ class Address {
 }
 
 class Jerry {
-  span: Address
-  map: Map<Node, Address>
-  node: Node
+  root: Node
+  pointer: Address
+  lookup: Map<Node, Address>
 
-  constructor(node = document.body) {
-    this.node = node
+  constructor(root = document.body) {
+    this.root = root
     this.refresh()
   }
 
   refresh() {
-    const {map, span} = getLeafMap(this.node)
-    this.span = span
-    this.map = map
+    const {lookup, pointer} = indexNode(this.root)
+    this.pointer = pointer
+    this.lookup = lookup
   }
 
   getNodeAddress(node): Address {
-    return this.map.get(node)
+    return this.lookup.get(node)
   }
 
   getSelection(): Address {
@@ -164,15 +184,15 @@ class Jerry {
     const start = range.startOffset + startOffset
     const endOffset = this.getNodeAddress(range.endContainer)?.start
     const end = range.endOffset + endOffset
-    return new Address(this.node, start, end)
+    return new Address(this.root, start, end)
   }
 
   gatherHighlights(className = 'highlight'): Address[] {
+    this.refresh()
     const nodes = Array.from(document.querySelectorAll(`.${className}`))
-    const {map} = getNodeMap(this.node)
     // TODO: merge adjacent addresses
     return nodes.map(node => {
-      return map.get(node)
+      return this.lookup.get(node)
     })
   }
 }

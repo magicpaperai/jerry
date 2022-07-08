@@ -19,7 +19,8 @@
       document.querySelector('#capture').addEventListener('mousedown', evt => {
         const map = new Jerry()
         const sel = map.getSelection()
-        sel.wrap('highlight')
+        console.log('hash', sel.getHash())
+        sel.highlight('highlight')
         window.getSelection().empty()
         console.log(map.gatherHighlights())
       })

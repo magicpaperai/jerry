@@ -22,5 +22,9 @@
     "webpack-merge": "^5.8.0"
   },
   "author": "Matt Neary",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "djb2": "^0.0.2"
+  }
 }
