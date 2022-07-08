@@ -4,6 +4,12 @@
 
 jerry is a javascript package for text-content addressing on the web
 
+## install
+
+```bash
+$ npm install jerrymander
+```
+
 ## docs
 
 - `new Jerry(root = document.body)`
