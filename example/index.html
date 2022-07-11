@@ -80,12 +80,12 @@
     <img src="../jerry.svg" />
     <script type="text/javascript">
       document.querySelector('#capture').addEventListener('mousedown', evt => {
-        const map = new Jerry()
-        const sel = map.getSelection()
+        const jerry = new Jerry()
+        const sel = jerry.getSelection()
         console.log('hash', sel.getHash())
         sel.highlight('highlight')
         window.getSelection().empty()
-        console.log(map.gatherHighlights())
+        console.log(jerry.serialize())
       })
     </script>
   </body>

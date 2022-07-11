@@ -10,15 +10,19 @@ jerry is a javascript package for text-content addressing on the web
 $ npm install jerrymander
 ```
 
+## usage
+
+```javascript
+const jerry = new Jerry()
+jerry.getSelection().highlight()
+localStorage.highlights = JSON.stringify(jerry.serialize())
+```
+
 ## docs
 
 - `new Jerry(root = document.body)`
 
 create a Jerry instance around a given root node.
-
-- `Jerry#getNodeAddress(node): Address`
-
-get the address for a given DOM node (relative to root node).
 
 - `Jerry#getSelection(): Address`
 
@@ -28,9 +32,9 @@ get the address of the current user selection.
 
 returns the addresses for all highlights.
 
-- `new Address(root: Node, start: number, end: number)`
+- `Jerry#serialize(): string[]`
 
-create an Address spanning a range relative to a given root node.
+serializes all highlights for storage or transmission.
 
 - `Address#getContent(): string`
 

@@ -154,6 +154,26 @@ class Address {
       }
     }
   }
+
+  shift(offset: number): Address {
+    return new Address(this.root, this.start + offset, this.end + offset)
+  }
+
+  includes(otherAddr: Address): Address {
+    if (otherAddr.root !== this.root) return false
+    if (this.start <= otherAddr.start && this.end >= otherAddr.end) return true
+    return false
+  }
+
+  rebase(targetNode: Node = document.body): Address {
+    const {lookup} = indexNode(document.body)
+    const rootAddr = lookup.get(this.root)
+    const targetAddr = lookup.get(targetNode)
+    const thisAddr = this.shift(rootAddr.start)
+    if (!targetAddr.includes(thisAddr)) return null
+    const shiftedAddr = thisAddr.shift(-targetAddr.start)
+    return new Address(targetNode, shiftedAddr.start, shiftedAddr.end)
+  }
 }
 
 class Jerry {
@@ -176,6 +196,23 @@ class Jerry {
     return this.lookup.get(node)
   }
 
+  static unionAddresses(addrs: Address[]): Address[] {
+    // for now, don't union if not all addresses share a root
+    if (!addrs.every(x => x.root === addrs[0].root)) return addrs
+
+    const sorted = _.sortBy(addrs, 'start')
+    let union = [sorted[0]]
+    sorted.slice(1).forEach(x => {
+      const prev = _.last(union)
+      if (prev.end < x.start) {
+        union.push(x)
+      } else {
+        union[union.length - 1] = new Address(prev.root, prev.start, Math.max(prev.end, x.end))
+      }
+    })
+    return union
+  }
+
   getSelection(): Address {
     const sel = window.getSelection()
     if (!sel) return null
@@ -189,11 +226,13 @@ class Jerry {
 
   gatherHighlights(className = 'highlight'): Address[] {
     this.refresh()
-    const nodes = Array.from(document.querySelectorAll(`.${className}`))
-    // TODO: merge adjacent addresses
-    return _.compact(nodes.map(node => {
-      return this.lookup.get(node)
-    }))
+    const nodes = Array.from(this.root.querySelectorAll(`.${className}`))
+    return Jerry.unionAddresses(nodes.map(node => return this.lookup.get(node)))
+  }
+
+  serialize(className = 'highlight'): string[] {
+    const highlights = this.gatherHighlights(className)
+    return highlights.map(x => x.rebase()).map(addr => `body:${addr.start}-${addr.end}`)
   }
 }
 
