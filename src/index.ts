@@ -159,7 +159,7 @@ class Address {
     return new Address(this.root, this.start + offset, this.end + offset)
   }
 
-  includes(otherAddr: Address): Address {
+  includes(otherAddr: Address): boolean {
     if (otherAddr.root !== this.root) return false
     if (this.start <= otherAddr.start && this.end >= otherAddr.end) return true
     return false
@@ -176,7 +176,7 @@ class Address {
   }
 }
 
-class Jerry {
+export class Jerry {
   root: Node
   pointer: Address
   lookup: Map<Node, Address>
@@ -226,8 +226,8 @@ class Jerry {
 
   gatherHighlights(className = 'highlight'): Address[] {
     this.refresh()
-    const nodes = Array.from(this.root.querySelectorAll(`.${className}`))
-    return Jerry.unionAddresses(nodes.map(node => return this.lookup.get(node)))
+    const nodes = Array.from((this.root as Element).querySelectorAll(`.${className}`))
+    return Jerry.unionAddresses(nodes.map((node: Node) => this.lookup.get(node)))
   }
 
   serialize(className = 'highlight'): string[] {
@@ -244,5 +244,4 @@ class Jerry {
   }
 }
 
-if (typeof window !== 'undefined') (window as any).Jerry = Jerry
 export default Jerry

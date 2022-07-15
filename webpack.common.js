@@ -4,12 +4,12 @@ const {version} = require('./package.json');
 
 module.exports = {
   context: __dirname,
-  entry: {
-    'index': "./src/index.ts",
-  },
+  entry: "./src/index.ts",
   output: {
     path: path.join(__dirname, "dist"),
-    filename: "[name].js"
+    filename: "index.js",
+    library: "jerrymander",
+    libraryTarget: "umd"
   },
   module: {
     rules: [
@@ -23,7 +23,7 @@ module.exports = {
   mode: 'production',
   resolve: {
     extensions: [".js", ".ts"]
-  }
+  },
 };
 
 function transformHtml(content) {
