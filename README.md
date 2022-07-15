@@ -28,22 +28,18 @@ create a Jerry instance around a given root node.
 
 get the address of the current user selection.
 
-- `Jerry#gatherHighlights(): Address[]`
+- `Address#highlight(className = 'highlight)`
 
-returns the addresses for all highlights.
+highlight the content at a given address (takes an optional className to apply).
 
 - `Jerry#serialize(): string[]`
 
 serializes all highlights for storage or transmission.
 
-- `Address#getContent(): string`
+- `Jerry#deserialize(highlights: string[]): Address[]`
 
-get the text content at the address.
+deserialize a serialization result back into Addresses.
 
 - `Address#getHash(): number`
 
 get the hash of the content at an address.
-
-- `Address#highlight(className = 'highlight)`
-
-highlight the content at a given address (takes an optional className to apply).

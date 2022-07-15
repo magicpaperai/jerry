@@ -234,6 +234,14 @@ class Jerry {
     const highlights = this.gatherHighlights(className)
     return highlights.map(x => x.rebase()).map(addr => `body:${addr.start}-${addr.end}`)
   }
+
+  deserialize(tokens: string[]): Address[] {
+    return _.compact(tokens.map(token => {
+      const [body, range] = token.split(':')
+      const [start, end] = range.split('-')
+      return new Address(document.body, +start, +end).rebase(this.root)
+    }))
+  }
 }
 
 if (typeof window !== 'undefined') (window as any).Jerry = Jerry
