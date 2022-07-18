@@ -52,7 +52,7 @@ function isLeaf(node): node is Text {
   return false
 }
 
-class Address {
+export class Address {
   root: Node
   start: number
   end: number
