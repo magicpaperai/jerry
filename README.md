@@ -1,7 +1,5 @@
 # jerry
 
-![jerry](jerry.svg)
-
 Pages on the web are modeled as data in the form of a tree. Nodes have child
 nodes, such that your average webpage consists of containers of containers of
 containers of--ultimately--text or media content. In certain contexts, notably
@@ -10,6 +8,8 @@ structure of a more traditional document. Jerry is a framework for translating
 between webpages-as-tree-structures and -as-linear-text. With jerry, every
 `Node` on a webpage is given an `Address`---which can then be manipulated in
 various ways.
+
+![jerry](jerry.svg)
 
 ## install
 
