@@ -52,15 +52,19 @@ function isLeaf(node): node is Text {
   return false
 }
 
+type Direction = 'left' | 'right'
+
 export class Address {
   root: Node
   start: number
   end: number
+  bias: Direction
 
-  constructor(root: Node, start: number, end: number) {
+  constructor(root: Node, start: number, end: number, bias: Direction = 'left') {
     this.root = root
     this.start = start
     this.end = end
+    this.bias = bias
   }
 
   getContent(): string {
@@ -81,6 +85,10 @@ export class Address {
     const inverse = _.chain(Array.from(leafLookup))
       .filter(x => x[1].start !== x[1].end)
       .sortBy(x => x[1].start).value()
+    if (this.start === this.end) {
+      const item = _.findLast(inverse, x => x[1].start < this.start)
+      return [new Address(item[0], this.start - item[1].start, this.start - item[1].start)]
+    }
     const startItem = _.findLast(inverse, x => x[1].start <= this.start)
     const startIndex = inverse.indexOf(startItem)
     const [startNode, startSpan] = startItem
@@ -169,7 +177,7 @@ export class Address {
     const {lookup} = indexNode(document.body)
     const rootAddr = lookup.get(this.root)
     const targetAddr = lookup.get(targetNode)
-    const thisAddr = this.shift(rootAddr.start)
+    const thisAddr = new Address(document.body, this.start, this.end).shift(rootAddr.start)
     if (!targetAddr.includes(thisAddr)) return null
     const shiftedAddr = thisAddr.shift(-targetAddr.start)
     return new Address(targetNode, shiftedAddr.start, shiftedAddr.end)
@@ -221,7 +229,7 @@ export class Jerry {
     const start = range.startOffset + startOffset
     const endOffset = this.getNodeAddress(range.endContainer)?.start
     const end = range.endOffset + endOffset
-    return new Address(this.root, start, end)
+    return new Address(this.root, start, end, range.endOffset === 0 ? 'right' : 'left')
   }
 
   gatherHighlights(className = 'highlight'): Address[] {
