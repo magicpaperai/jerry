@@ -52,7 +52,7 @@ function isLeaf(node): node is Text {
   return false
 }
 
-type Direction = 'left' | 'right'
+type Direction = 'left' | 'right' | 'neither'
 
 export class Address {
   root: Node
@@ -229,7 +229,12 @@ export class Jerry {
     const start = range.startOffset + startOffset
     const endOffset = this.getNodeAddress(range.endContainer)?.start
     const end = range.endOffset + endOffset
-    return new Address(this.root, start, end, range.endOffset === 0 ? 'right' : 'left')
+    return new Address(
+      this.root,
+      start,
+      end,
+      range.endOffset === 0 ? (range.startOffset === 0 ? 'neither' : 'right') : 'left'
+    )
   }
 
   gatherHighlights(className = 'highlight'): Address[] {
