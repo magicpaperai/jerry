@@ -7,26 +7,35 @@ type JerryIndex = {
   content: string
 }
 
-function indexNode(root, node = null, offset = 0): JerryIndex {
+function indexNode(root, node = null, offset = 0, mode = null): JerryIndex {
   if (!node && root) return indexNode(root, root, offset)
-  if (node.nodeType === 3) {
+  if (mode === 'blackbox') {
+    if (node.dataset?.jerryType === 'signpost') {
+      return indexNode(root, node, offset)
+    } else if (node.nodeType === 3 || !node?.childNodes) {
+      const address = new Address(root, offset, offset)
+      const leafMap = new Map()
+      leafMap.set(node, address)
+      return {pointer: address, lookup: leafMap, content: ''}
+    }
+  } else if (node.nodeType === 3) {
     const address = new Address(root, offset, offset + node.length)
     const leafMap = new Map()
     leafMap.set(node, address)
-    return {pointer: address, lookup: leafMap, content: root.textContent}
-  }
-  if (!node?.childNodes) {
+    return {pointer: address, lookup: leafMap, content: node.textContent}
+  } else if (!node?.childNodes) {
     const address = new Address(root, offset, offset)
     const leafMap = new Map()
     leafMap.set(node, address)
     return {pointer: address, lookup: leafMap, content: ''}
   }
 
+  let recurseMode = node.dataset.jerryType || mode
   let content = ''
   let children = []
   let scanOffset = offset
   Array.from(node.childNodes).forEach(node => {
-    const {pointer, lookup, content: c} = indexNode(root, node, scanOffset)
+    const {pointer, lookup, content: c} = indexNode(root, node, scanOffset, recurseMode)
     children.push(lookup)
     content += c
     scanOffset = pointer.end
@@ -79,7 +88,7 @@ export class Address {
   toLeafs(): Address[] {
     if (isLeaf(this.root)) return [this]
     if (!isLeaf(this.root) && !this.root.childNodes) return []
-    const {lookup} = indexNode(this.root)
+    const {lookup, content} = indexNode(this.root)
     const leafLookup = filterMap(lookup, isLeaf)
 
     const inverse = _.chain(Array.from(leafLookup))
@@ -126,11 +135,12 @@ export class Address {
 
   highlight(className = 'highlight') {
     if (!isLeaf(this.root)) {
-      this.toAtoms().forEach(atom => atom.highlight(className))
+      return _.flatMap(this.toAtoms(), atom => atom.highlight(className))
     } else {
       const parentNode = this.root.parentNode as Element
       if (parentNode.classList.contains(className) && parentNode.childNodes.length === 1) {
         parentNode.parentNode.replaceChild(this.root, parentNode)
+        return []
       } else if (parentNode.classList.contains(className)) {
         const nodes = Array.from(parentNode.childNodes)
         const nodeIndex = nodes.indexOf(this.root)
@@ -153,12 +163,14 @@ export class Address {
           } else {
             parentNode.parentNode.appendChild(wrapped)
           }
+          return []
         }
       } else {
         const wrapped = document.createElement('span')
         wrapped.classList.add(className)
         parentNode.replaceChild(wrapped, this.root)
         wrapped.appendChild(this.root)
+        return [wrapped]
       }
     }
   }
@@ -226,9 +238,11 @@ export class Jerry {
     if (!sel) return null
     const range = sel.getRangeAt(0)
     const startOffset = this.getNodeAddress(range.startContainer)?.start
-    const start = range.startOffset + startOffset
+    const startMax = this.getNodeAddress(range.startContainer)?.end
+    const start = Math.min(range.startOffset + startOffset, startMax)
     const endOffset = this.getNodeAddress(range.endContainer)?.start
-    const end = range.endOffset + endOffset
+    const endMax = this.getNodeAddress(range.endContainer)?.end
+    const end = Math.min(range.endOffset + endOffset, endMax)
     return new Address(
       this.root,
       start,

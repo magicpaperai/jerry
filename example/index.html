@@ -24,6 +24,9 @@
       .byline {
         color: #777;
       }
+      .signpost {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -66,6 +69,11 @@
         environment so that he has been able to survive severe climatic and other
         changes, and to spread swiftly out into every corner of the Earth.
       </p>
+      <div data-jerry-type="blackbox">
+        <span data-jerry-type="signpost" class='signpost'>[</span>
+        <em>Some intervening text that should not interfere with addressing system.</em>
+        <span data-jerry-type="signpost" class='signpost'>]</span>
+      </div>
       <p>
         His capacity to transcend the temporal limits of his own life span by
         communicating his thought and feelings through many generations has given him
@@ -82,6 +90,7 @@
       document.querySelector('#capture').addEventListener('mousedown', evt => {
         const jerry = new jerrymander.Jerry()
         const sel = jerry.getSelection()
+        if (sel.start === sel.end) return
         console.log('hash', sel.getHash())
         sel.highlight('highlight')
         window.getSelection().empty()
