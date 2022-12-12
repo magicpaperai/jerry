@@ -235,7 +235,7 @@ export class Jerry {
 
   getSelection(): Address {
     const sel = window.getSelection()
-    if (!sel) return null
+    if (!sel || !sel.rangeCount) return null
     const range = sel.getRangeAt(0)
     const startOffset = this.getNodeAddress(range.startContainer)?.start
     const startMax = this.getNodeAddress(range.startContainer)?.end
