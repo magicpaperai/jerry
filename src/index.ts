@@ -122,6 +122,7 @@ export class Address {
 
   select() {
     const leafs = this.toLeafs()
+    window.getSelection().empty()
     leafs.forEach(addr => {
       let range = new Range()
       range.setStart(addr.root, addr.start)
