@@ -39,6 +39,10 @@ get the address of the current user selection.
 
 highlight the content at a given address (takes an optional className to apply).
 
+- `Address#select()`
+
+set selected text range to the contents of this address
+
 - `Jerry#serialize(): string[]`
 
 serializes all highlights for storage or transmission.

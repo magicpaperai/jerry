@@ -34,6 +34,7 @@
       <div class='headline'>
         <h1>Man in Universe</h1>
         <button id="capture">Highlight Selection</button>
+        <button id="select">Select Highlights</button>
       </div>
       <div class='byline'>Richard Buckminster Fuller, 1963</div>
     </header>
@@ -95,6 +96,15 @@
         sel.highlight('highlight')
         window.getSelection().empty()
         console.log(jerry.serialize())
+      })
+
+      document.querySelector('#select').addEventListener('mousedown', evt => {
+        const jerry = new jerrymander.Jerry()
+        const highlights = jerry.gatherHighlights('highlight')
+        console.log(highlights)
+        highlights.forEach(addr => {
+          addr.select()
+        })
       })
     </script>
   </body>

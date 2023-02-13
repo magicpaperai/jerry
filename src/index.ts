@@ -10,6 +10,7 @@ type JerryIndex = {
 function indexNode(root, node = null, offset = 0, mode = null): JerryIndex {
   if (!node && root) return indexNode(root, root, offset)
   if (mode === 'blackbox') {
+    // TODO: need better support for nested blackboxes
     if (node.dataset?.jerryType === 'signpost') {
       return indexNode(root, node, offset)
     } else if (node.nodeType === 3 || !node?.childNodes) {
@@ -117,6 +118,16 @@ export class Address {
       ),
       new Address(endNode, 0, endSpot),
     ]
+  }
+
+  select() {
+    const leafs = this.toLeafs()
+    leafs.forEach(addr => {
+      let range = new Range()
+      range.setStart(addr.root, addr.start)
+      range.setEnd(addr.root, addr.end)
+      document.getSelection().addRange(range)
+    })
   }
 
   toAtom() {
