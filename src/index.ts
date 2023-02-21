@@ -123,12 +123,13 @@ export class Address {
   select() {
     const leafs = this.toLeafs()
     window.getSelection().empty()
-    leafs.forEach(addr => {
-      let range = new Range()
-      range.setStart(addr.root, addr.start)
-      range.setEnd(addr.root, addr.end)
-      document.getSelection().addRange(range)
-    })
+    if (_.isEmpty(leafs)) return
+    let range = new Range()
+    const first = leafs[0]
+    const last = _.last(leafs)
+    range.setStart(first.root, first.start)
+    range.setEnd(last.root, last.end)
+    document.getSelection().addRange(range)
   }
 
   toAtom() {
