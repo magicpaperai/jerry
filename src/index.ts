@@ -132,18 +132,33 @@ export class Address {
     document.getSelection().addRange(range)
   }
 
-  toAtom() {
-    if (!isLeaf(this.root)) return null
-    if (this.start === 0 && this.end === this.root.length) {
-      return this
+  explode() {
+    if (!isLeaf(this.root) || this.end === this.start) return []
+    if (isLeaf(this.root) && this.end - this.start === 1) {
+      return [this]
     }
-    const rest = this.root.splitText(this.start)
-    const tail = rest.splitText(this.end - this.start)
-    return new Address(tail.previousSibling, 0, this.end - this.start)
+    let rest = this.root
+    let chars = []
+    while (rest.length > 1) {
+      rest = rest.splitText(1)
+      chars.push(rest.previousSibling)
+    }
+    chars.push(rest)
+    return chars.map(root => new Address(root, 0, 1))
+  }
+
+  toAtom() {
+    if (!isLeaf(this.root)) return []
+    if (this.start === 0 && this.end === this.root.length) {
+      return this.explode()
+    }
+    const rest = this.start === 0 ? this.root : this.root.splitText(this.start)
+    const tail = this.end === rest.length - 1 ? rest : rest.splitText(this.end - this.start)
+    return (new Address(tail.previousSibling, 0, this.end - this.start)).explode()
   }
 
   toAtoms() {
-    return _.compact(this.toLeafs().map(x => x.toAtom()))
+    return _.flatMap(this.toLeafs(), x => x.toAtom())
   }
 
   highlight(className = 'highlight') {
