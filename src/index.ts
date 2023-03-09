@@ -199,6 +199,7 @@ export class Address {
           // reinsert middle/selected child w/ wrapper
           const wrapped = document.createElement('span')
           wrapped.dataset.jerryHighlight = 'true'
+          wrapped.contentEditable = 'false'
           parentClasses.forEach(c => wrapped.classList.add(c))
           wrapped.classList.add(className)
           if (parentClasses.includes(className)) wrapped.classList.remove(className)
@@ -218,6 +219,7 @@ export class Address {
         if (after.length) {
           const wrapped = document.createElement('span')
           wrapped.dataset.jerryHighlight = 'true'
+          wrapped.contentEditable = 'false'
           parentClasses.forEach(c => wrapped.classList.add(c))
           after.forEach((afterNode: any) => {
             if (afterNode.nodeType === 3 && !afterNode.length) return
@@ -245,6 +247,7 @@ export class Address {
         // wrap in a highlight element
         const wrapped = document.createElement('span')
         wrapped.dataset.jerryHighlight = 'true'
+        wrapped.contentEditable = 'false'
         wrapped.classList.add(className)
         parentNode.replaceChild(wrapped, this.root)
         wrapped.appendChild(this.root)
