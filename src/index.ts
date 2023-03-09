@@ -147,39 +147,104 @@ export class Address {
   }
 
   highlight(className = 'highlight') {
+    // TODO: track highlight wrappers with a data-highlight attribute
+    // this way various highlight classes can coexist well
     if (!isLeaf(this.root)) {
       return _.flatMap(this.toAtoms(), atom => atom.highlight(className))
     } else {
-      const parentNode = this.root.parentNode as Element
-      if (parentNode.classList.contains(className) && parentNode.childNodes.length === 1) {
-        parentNode.parentNode.replaceChild(this.root, parentNode)
-        return []
-      } else if (parentNode.classList.contains(className)) {
+      const parentNode = this.root.parentNode as HTMLElement
+      if (parentNode.dataset.jerryHighlight && parentNode.childNodes.length === 1) {
+        if (parentNode.classList.contains(className)) {
+          // if already has the highlight...
+          if (parentNode.classList.length === 1) {
+            // cleanup highlight wrapper element if it's the only class attached
+            parentNode.parentNode.replaceChild(this.root, parentNode)
+            this.root.parentNode.normalize()
+          } else {
+            // only remove the designated highlight class if there's another attached
+            parentNode.classList.remove(className)
+          }
+          return []
+        } else {
+          // attach the designated class if it's not already there
+          parentNode.classList.add(className)
+          return [parentNode]
+        }
+      } else if (parentNode.dataset.jerryHighlight) {
+        // cleanup when only part of the highlight needs to be inverted
         const nodes = Array.from(parentNode.childNodes)
+        const parentClasses = Array.from(parentNode.classList)
         const nodeIndex = nodes.indexOf(this.root)
-        const before = nodes.slice(0, nodeIndex)
+        const before = Array.from(nodes.slice(0, nodeIndex)).filter((x: any) => {
+          if (x.nodeType === 3 && !x.length) return false
+          return true
+        })
         const after = nodes.slice(nodeIndex + 1)
+
+        // remove middle/selected child and any coming after it
         parentNode.removeChild(this.root)
         after.forEach(afterNode => parentNode.removeChild(afterNode))
-        if (parentNode.nextSibling) {
-          parentNode.parentNode.insertBefore(this.root, parentNode.nextSibling)
-        } else {
-          parentNode.parentNode.appendChild(this.root)
-        }
 
-        if (after.length) {
+        let result = []
+        let updatedMiddle = null
+        if (parentClasses.includes(className) && parentClasses.length === 1) {
+          // reinsert middle/selected child w/o wrapper
+          if (parentNode.nextSibling) {
+            parentNode.parentNode.insertBefore(this.root, parentNode.nextSibling)
+          } else {
+            parentNode.parentNode.appendChild(this.root)
+          }
+          updatedMiddle = this.root
+        } else {
+          // reinsert middle/selected child w/ wrapper
           const wrapped = document.createElement('span')
+          wrapped.dataset.jerryHighlight = 'true'
+          parentClasses.forEach(c => wrapped.classList.add(c))
           wrapped.classList.add(className)
-          after.forEach(afterNode => wrapped.appendChild(afterNode))
-          if (this.root.nextSibling) {
-            parentNode.parentNode.insertBefore(wrapped, this.root.nextSibling)
+          if (parentClasses.includes(className)) wrapped.classList.remove(className)
+
+          wrapped.appendChild(this.root)
+          if (parentNode.nextSibling) {
+            parentNode.parentNode.insertBefore(wrapped, parentNode.nextSibling)
           } else {
             parentNode.parentNode.appendChild(wrapped)
           }
-          return []
+          updatedMiddle = wrapped
+          result = [wrapped]
         }
+
+        // reinsert children coming after it, wrapped
+        // TODO: somehow cleanup whitespace--avoid creating a whitespace-only wrapper
+        if (after.length) {
+          const wrapped = document.createElement('span')
+          wrapped.dataset.jerryHighlight = 'true'
+          parentClasses.forEach(c => wrapped.classList.add(c))
+          after.forEach((afterNode: any) => {
+            if (afterNode.nodeType === 3 && !afterNode.length) return
+            wrapped.appendChild(afterNode)
+          })
+          if (wrapped.childNodes.length) {
+            if (updatedMiddle.nextSibling) {
+              parentNode.parentNode.insertBefore(wrapped, updatedMiddle.nextSibling)
+            } else {
+              parentNode.parentNode.appendChild(wrapped)
+            }
+          }
+        }
+
+        // cleanup empty before section
+        const container = parentNode.parentNode
+        if (_.isEmpty(before)) {
+            container.removeChild(parentNode)
+        }
+
+        container.normalize()
+
+        return result
       } else {
+        // wrap in a highlight element
         const wrapped = document.createElement('span')
+        wrapped.dataset.jerryHighlight = 'true'
         wrapped.classList.add(className)
         parentNode.replaceChild(wrapped, this.root)
         wrapped.appendChild(this.root)
@@ -231,7 +296,7 @@ export class Jerry {
 
   static unionAddresses(addrs: Address[]): Address[] {
     // for now, don't union if not all addresses share a root
-    if (!addrs.every(x => x.root === addrs[0].root)) return addrs
+    if (!addrs.every(x => x.root === addrs[0].root) || _.isEmpty(addrs)) return addrs
 
     const sorted = _.sortBy(addrs, 'start')
     let union = [sorted[0]]
@@ -264,14 +329,14 @@ export class Jerry {
     )
   }
 
-  gatherHighlights(className = 'highlight'): Address[] {
+  gatherHighlights(): Address[] {
     this.refresh()
-    const nodes = Array.from((this.root as Element).querySelectorAll(`.${className}`))
+    const nodes = Array.from((this.root as Element).querySelectorAll('[data-jerry-highlight]'))
     return Jerry.unionAddresses(nodes.map((node: Node) => this.lookup.get(node)))
   }
 
-  serialize(className = 'highlight'): string[] {
-    const highlights = this.gatherHighlights(className)
+  serialize(): string[] {
+    const highlights = this.gatherHighlights()
     return highlights.map(x => x.rebase()).map(addr => `body:${addr.start}-${addr.end}`)
   }
 

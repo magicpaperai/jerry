@@ -12,6 +12,9 @@
       .highlight {
         background: yellow;
       }
+      .bold {
+        font-weight: bold;
+      }
       .headline {
         margin-top: 25px;
         display: flex;
@@ -27,16 +30,28 @@
       .signpost {
         display: none;
       }
+      .actions {
+        margin-top: 0.5em;
+        display: flex;
+      }
+      .actions .spacer {
+        height: 1em;
+        flex: 1;
+      }
     </style>
   </head>
   <body>
     <header>
       <div class='headline'>
         <h1>Man in Universe</h1>
-        <button id="capture">Highlight Selection</button>
-        <button id="select">Select Highlights</button>
       </div>
       <div class='byline'>Richard Buckminster Fuller, 1963</div>
+      <div class='actions'>
+        <div class='spacer'></div>
+        <button id="highlight">Highlight Selection</button>
+        <button id="bold">Bold Selection</button>
+        <button id="select">Select Highlights</button>
+      </div>
     </header>
     <article>
       <p>
@@ -88,19 +103,27 @@
     </article>
     <img src="../jerry.svg" />
     <script type="text/javascript">
-      document.querySelector('#capture').addEventListener('mousedown', evt => {
+      document.querySelector('#highlight').addEventListener('mousedown', evt => {
         const jerry = new jerrymander.Jerry()
         const sel = jerry.getSelection()
         if (sel.start === sel.end) return
-        console.log('hash', sel.getHash())
-        sel.highlight('highlight')
+        // console.log('hash', sel.getHash())
+        console.log('highlighted', sel.highlight('highlight'))
         window.getSelection().empty()
-        console.log(jerry.serialize())
+        // console.log(jerry.serialize())
+      })
+
+      document.querySelector('#bold').addEventListener('mousedown', evt => {
+        const jerry = new jerrymander.Jerry()
+        const sel = jerry.getSelection()
+        if (sel.start === sel.end) return
+        console.log('bolded', sel.highlight('bold'))
+        window.getSelection().empty()
       })
 
       document.querySelector('#select').addEventListener('mousedown', evt => {
         const jerry = new jerrymander.Jerry()
-        const highlights = jerry.gatherHighlights('highlight')
+        const highlights = jerry.gatherHighlights()
         console.log(highlights)
         highlights.forEach(addr => {
           addr.select()
