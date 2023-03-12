@@ -150,11 +150,11 @@ export class Address {
   toAtom() {
     if (!isLeaf(this.root)) return []
     if (this.start === 0 && this.end === this.root.length) {
-      return this.explode()
+      return [this]
     }
     const rest = this.start === 0 ? this.root : this.root.splitText(this.start)
     const tail = this.end === rest.length - 1 ? rest : rest.splitText(this.end - this.start)
-    return (new Address(tail.previousSibling, 0, this.end - this.start)).explode()
+    return [new Address(tail.previousSibling, 0, this.end - this.start)]
   }
 
   toAtoms() {
@@ -347,20 +347,33 @@ export class Jerry {
     )
   }
 
-  gatherHighlights(): Address[] {
+  gatherHighlights(): Record<string, Address[]> {
     this.refresh()
     const nodes = Array.from((this.root as Element).querySelectorAll('[data-jerry-highlight]'))
-    return Jerry.unionAddresses(nodes.map((node: Node) => this.lookup.get(node)))
+    const classes = _.uniq(_.flatMap(nodes, x => Array.from(x.classList)))
+    const byClass: [string, Node[]][] = classes.map(className => [
+      className,
+      nodes.filter((node: Element) => node.classList.contains(className)),
+    ]) as [string, Node[]][]
+    return _.fromPairs(byClass.map(([className, nodes]) =>
+      [className, Jerry.unionAddresses(nodes.map((node: Node) => this.lookup.get(node)))]
+    ))
   }
 
   serialize(): string[] {
-    const highlights = this.gatherHighlights()
-    return highlights.map(x => x.rebase()).map(addr => `body:${addr.start}-${addr.end}`)
+    const highlights = _.toPairs(this.gatherHighlights())
+    return _.flatMap(highlights, ([className, xs]) => {
+      return xs.map(x => [className, x])
+    }).map(([className, x]: [string, Address]) => {
+      const addr = x.rebase()
+      return `body.${className}:${addr.start}-${addr.end}`
+    })
   }
 
   deserialize(tokens: string[]): Address[] {
     return _.compact(tokens.map(token => {
-      const [body, range] = token.split(':')
+      const [flags, range] = token.split(':')
+      const [body, className] = flags.split('.')
       const [start, end] = range.split('-')
       return new Address(document.body, +start, +end).rebase(this.root)
     }))

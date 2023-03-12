@@ -110,7 +110,7 @@
         // console.log('hash', sel.getHash())
         console.log('highlighted', sel.highlight('highlight'))
         window.getSelection().empty()
-        // console.log(jerry.serialize())
+        console.log(jerry.serialize())
       })
 
       document.querySelector('#bold').addEventListener('mousedown', evt => {
@@ -125,7 +125,7 @@
         const jerry = new jerrymander.Jerry()
         const highlights = jerry.gatherHighlights()
         console.log(highlights)
-        highlights.forEach(addr => {
+        highlights.highlight.forEach(addr => {
           addr.select()
         })
       })
