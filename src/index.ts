@@ -343,19 +343,20 @@ export class Jerry {
     const isText = range.startContainer.nodeType === 3
     const startOffset = this.getNodeAddress(range.startContainer)?.start
     const startMax = this.getNodeAddress(range.startContainer)?.end
-    const childNodes = isText ? [] : Array.from(range.startContainer.childNodes)
+    const startNodes = isText ? [] : Array.from(range.startContainer.childNodes)
 
     const startIndex = isText
-      ? range.startOffset
-      : this.getLength(childNodes.slice(0, range.startOffset))
-    const start = Math.min(startIndex + startOffset, startMax)
+      ? range.startOffset + startOffset
+      : this.getNodeAddress(startNodes[range.startOffset]).start
+    const start = Math.min(startIndex, startMax)
 
     const endOffset = this.getNodeAddress(range.endContainer)?.start
     const endMax = this.getNodeAddress(range.endContainer)?.end
+    const endNodes = isText ? [] : Array.from(range.endContainer.childNodes)
     const endIndex = isText
-      ? range.endOffset
-      : this.getLength(childNodes.slice(0, range.endOffset))
-    const end = Math.min(endIndex + endOffset, endMax)
+      ? range.endOffset + endOffset
+      : this.getNodeAddress(endNodes[range.endOffset]).start
+    const end = Math.min(endIndex, endMax)
     return new Address(
       this.root,
       start,
