@@ -150,11 +150,11 @@ export class Address {
   toAtom() {
     if (!isLeaf(this.root)) return []
     if (this.start === 0 && this.end === this.root.length) {
-      return [this]
+      return this.explode()
     }
     const rest = this.start === 0 ? this.root : this.root.splitText(this.start)
     const tail = this.end === rest.length - 1 ? rest : rest.splitText(this.end - this.start)
-    return [new Address(tail.previousSibling, 0, this.end - this.start)]
+    return (new Address(tail.previousSibling, 0, this.end - this.start)).explode()
   }
 
   toAtoms() {
@@ -329,16 +329,33 @@ export class Jerry {
     return union
   }
 
+  getLength(nodes) {
+    return _.sumBy(nodes, node => {
+      const addr = this.getNodeAddress(node)
+      return addr.end - addr.start
+    })
+  }
+
   getSelection(): Address {
     const sel = window.getSelection()
     if (!sel || !sel.rangeCount) return null
     const range = sel.getRangeAt(0)
+    const isText = range.startContainer.nodeType === 3
     const startOffset = this.getNodeAddress(range.startContainer)?.start
     const startMax = this.getNodeAddress(range.startContainer)?.end
-    const start = Math.min(range.startOffset + startOffset, startMax)
+    const childNodes = isText ? [] : Array.from(range.startContainer.childNodes)
+
+    const startIndex = isText
+      ? range.startOffset
+      : this.getLength(childNodes.slice(0, range.startOffset))
+    const start = Math.min(startIndex + startOffset, startMax)
+
     const endOffset = this.getNodeAddress(range.endContainer)?.start
     const endMax = this.getNodeAddress(range.endContainer)?.end
-    const end = Math.min(range.endOffset + endOffset, endMax)
+    const endIndex = isText
+      ? range.endOffset
+      : this.getLength(childNodes.slice(0, range.endOffset))
+    const end = Math.min(endIndex + endOffset, endMax)
     return new Address(
       this.root,
       start,
