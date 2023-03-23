@@ -386,8 +386,7 @@ export class Jerry {
     ))
   }
 
-  drawHighlights(className = 'highlight'): Element[] {
-    const highlights = this.gatherHighlights()[className] || []
+  drawHighlights(highlights: Address[], className = 'highlight'): Element[] {
     if (_.isEmpty(highlights)) return []
     const rects = _.flatMap(highlights, hl => Array.from(hl.getRects()))
     const articleRect = (this.root as Element).getBoundingClientRect()

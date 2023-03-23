@@ -1,7 +1,7 @@
 {
   "name": "jerrymander",
   "author": "Matt Neary <neary.matt@gmail.com>",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "text-content addressing for the web",
   "homepage": "https://github.com/mattneary/jerry",
   "license": "GPLV3",

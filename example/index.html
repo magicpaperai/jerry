@@ -118,8 +118,9 @@
         const article = document.querySelector('article')
         const jerry = new jerrymander.Jerry(article)
         const overlayer = document.querySelector('#overlayer')
+        const highlights = jerry.gatherHighlights().highlight || []
         overlayer.innerHTML = ''
-        jerry.drawHighlights().forEach(elm => {
+        jerry.drawHighlights(highlights).forEach(elm => {
           overlayer.appendChild(elm)
         })
       }
