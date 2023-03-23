@@ -120,16 +120,27 @@ export class Address {
     ]
   }
 
-  select() {
+  getRange() {
     const leafs = this.toLeafs()
-    window.getSelection().empty()
     if (_.isEmpty(leafs)) return
     let range = new Range()
     const first = leafs[0]
     const last = _.last(leafs)
     range.setStart(first.root, first.start)
     range.setEnd(last.root, last.end)
-    document.getSelection().addRange(range)
+    return range
+  }
+
+  select() {
+    const leafs = this.toLeafs()
+    window.getSelection().empty()
+    if (_.isEmpty(leafs)) return
+    console.log('select', this.getRange())
+    document.getSelection().addRange(this.getRange())
+  }
+
+  getRects() {
+    return this.getRange().getClientRects()
   }
 
   explode() {
@@ -150,11 +161,11 @@ export class Address {
   toAtom() {
     if (!isLeaf(this.root)) return []
     if (this.start === 0 && this.end === this.root.length) {
-      return this.explode()
+      return [this]
     }
     const rest = this.start === 0 ? this.root : this.root.splitText(this.start)
     const tail = this.end === rest.length - 1 ? rest : rest.splitText(this.end - this.start)
-    return (new Address(tail.previousSibling, 0, this.end - this.start)).explode()
+    return [new Address(tail.previousSibling, 0, this.end - this.start)]
   }
 
   toAtoms() {
@@ -214,7 +225,6 @@ export class Address {
           // reinsert middle/selected child w/ wrapper
           const wrapped = document.createElement('span')
           wrapped.dataset.jerryHighlight = 'true'
-          wrapped.contentEditable = 'false'
           parentClasses.forEach(c => wrapped.classList.add(c))
           wrapped.classList.add(className)
           if (parentClasses.includes(className)) wrapped.classList.remove(className)
@@ -234,7 +244,6 @@ export class Address {
         if (after.length) {
           const wrapped = document.createElement('span')
           wrapped.dataset.jerryHighlight = 'true'
-          wrapped.contentEditable = 'false'
           parentClasses.forEach(c => wrapped.classList.add(c))
           after.forEach((afterNode: any) => {
             if (afterNode.nodeType === 3 && !afterNode.length) return
@@ -262,7 +271,6 @@ export class Address {
         // wrap in a highlight element
         const wrapped = document.createElement('span')
         wrapped.dataset.jerryHighlight = 'true'
-        wrapped.contentEditable = 'false'
         wrapped.classList.add(className)
         parentNode.replaceChild(wrapped, this.root)
         wrapped.appendChild(this.root)

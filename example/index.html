@@ -9,8 +9,17 @@
         max-width: 500px;
         margin: auto;
       }
-      .highlight {
+      article {
+        position: relative;
+      }
+      #overlayer {
+        position: absolute;
+        z-index: -1;
+      }
+      .over-rect {
+        position: absolute;
         background: yellow;
+        opacity: 0.5;
       }
       .bold {
         font-weight: bold;
@@ -54,6 +63,8 @@
       </div>
     </header>
     <article contentEditable>
+      <div data-jerry-type="blackbox" id="overlayer">
+      </div>
       <p>
         Man, as we know him, is a comparative late-comer in the history of the
         Earth and tenuous film of life which its surface has supported. In certain
@@ -103,6 +114,29 @@
     </article>
     <img src="../jerry.svg" />
     <script type="text/javascript">
+      function buildOverlay() {
+        const jerry = new jerrymander.Jerry()
+        const highlights = jerry.gatherHighlights().highlight
+        const rects = _.flatMap(highlights, hl => Array.from(hl.getRects()))
+        const articleRect = document.querySelector('article').getBoundingClientRect()
+        const shifted = rects.map(rect => new DOMRect(
+          rect.x - articleRect.left,
+          rect.y - articleRect.top,
+          rect.width,
+          rect.height
+        ))
+        const overlayer = document.querySelector('#overlayer')
+        overlayer.innerHTML = ''
+        shifted.forEach(rect => {
+          const div = document.createElement('div')
+          div.classList.add('over-rect')
+          div.style.width = `${rect.width}px`
+          div.style.height = `${rect.height}px`
+          div.style.top = `${rect.top}px`
+          div.style.left = `${rect.left}px`
+          overlayer.appendChild(div)
+        })
+      }
       document.querySelector('#highlight').addEventListener('mousedown', evt => {
         const jerry = new jerrymander.Jerry()
         const sel = jerry.getSelection()
@@ -110,7 +144,7 @@
         // console.log('hash', sel.getHash())
         console.log('highlighted', sel.highlight('highlight'))
         window.getSelection().empty()
-        console.log(jerry.serialize())
+        buildOverlay(jerry)
       })
 
       document.querySelector('#bold').addEventListener('mousedown', evt => {
@@ -123,9 +157,8 @@
 
       document.querySelector('#select').addEventListener('mousedown', evt => {
         const jerry = new jerrymander.Jerry()
-        const highlights = jerry.gatherHighlights()
-        console.log(highlights)
-        highlights.highlight.forEach(addr => {
+        const highlights = jerry.gatherHighlights().highlight
+        highlights.forEach(addr => {
           addr.select()
         })
       })
