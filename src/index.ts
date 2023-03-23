@@ -386,6 +386,29 @@ export class Jerry {
     ))
   }
 
+  drawHighlights(className = 'highlight'): Element[] {
+    const highlights = this.gatherHighlights()[className] || []
+    if (_.isEmpty(highlights)) return []
+    const rects = _.flatMap(highlights, hl => Array.from(hl.getRects()))
+    const articleRect = (this.root as Element).getBoundingClientRect()
+    const shifted = rects.map(rect => new DOMRect(
+      rect.x - articleRect.left,
+      rect.y - articleRect.top,
+      rect.width,
+      rect.height
+    ))
+    return shifted.map(rect => {
+      const div = document.createElement('div')
+      div.classList.add('over-rect')
+      div.classList.add(className)
+      div.style.width = `${rect.width}px`
+      div.style.height = `${rect.height}px`
+      div.style.top = `${rect.top}px`
+      div.style.left = `${rect.left}px`
+      return div
+    })
+  }
+
   serialize(): string[] {
     const highlights = _.toPairs(this.gatherHighlights())
     return _.flatMap(highlights, ([className, xs]) => {
