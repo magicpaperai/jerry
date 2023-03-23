@@ -386,7 +386,7 @@ export class Jerry {
     ))
   }
 
-  drawHighlights(highlights: Address[], className = 'highlight'): Element[] {
+  drawHighlights(highlights: Address[]): DOMRect[] {
     if (_.isEmpty(highlights)) return []
     const rects = _.flatMap(highlights, hl => Array.from(hl.getRects()))
     const articleRect = (this.root as Element).getBoundingClientRect()
@@ -396,16 +396,7 @@ export class Jerry {
       rect.width,
       rect.height
     ))
-    return shifted.map(rect => {
-      const div = document.createElement('div')
-      div.classList.add('over-rect')
-      div.classList.add(className)
-      div.style.width = `${rect.width}px`
-      div.style.height = `${rect.height}px`
-      div.style.top = `${rect.top}px`
-      div.style.left = `${rect.left}px`
-      return div
-    })
+    return shifted
   }
 
   serialize(): string[] {

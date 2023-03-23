@@ -120,8 +120,14 @@
         const overlayer = document.querySelector('#overlayer')
         const highlights = jerry.gatherHighlights().highlight || []
         overlayer.innerHTML = ''
-        jerry.drawHighlights(highlights).forEach(elm => {
-          overlayer.appendChild(elm)
+        jerry.drawHighlights(highlights).forEach(rect => {
+          const div = document.createElement('div')
+          div.classList.add('over-rect')
+          div.style.width = `${rect.width}px`
+          div.style.height = `${rect.height}px`
+          div.style.top = `${rect.top}px`
+          div.style.left = `${rect.left}px`
+          overlayer.appendChild(div)
         })
       }
       document.querySelector('#highlight').addEventListener('mousedown', evt => {
