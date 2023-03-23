@@ -392,7 +392,7 @@ export class Jerry {
     const articleRect = (this.root as Element).getBoundingClientRect()
     const shifted = rects.map(rect => new DOMRect(
       rect.x - articleRect.left,
-      rect.y - articleRect.top,
+      rect.y - articleRect.top + ((this.root as Element).scrollTop || 0),
       rect.width,
       rect.height
     ))
