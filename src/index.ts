@@ -103,6 +103,7 @@ export class Address {
     const startIndex = inverse.indexOf(startItem)
     const [startNode, startSpan] = startItem
     const endItem = _.find(inverse, x => x[1].end >= this.end)
+    if (!endItem) return []
     const endIndex = inverse.indexOf(endItem)
     const [endNode, endSpan] = endItem
     const startSpot = this.start - startSpan.start
@@ -140,7 +141,9 @@ export class Address {
   }
 
   getRects() {
-    return this.getRange().getClientRects()
+    const range = this.getRange()
+    if (!range) return []
+    return range.getClientRects()
   }
 
   explode() {
