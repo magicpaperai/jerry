@@ -352,8 +352,9 @@ export class Jerry {
     if (!sel || !sel.rangeCount) return null
     const range = sel.getRangeAt(0)
     const isText = range.startContainer.nodeType === 3
-    const startOffset = this.getNodeAddress(range.startContainer)?.start
-    const startMax = this.getNodeAddress(range.startContainer)?.end
+    const startAddr = this.getNodeAddress(range.startContainer)
+    const startOffset = startAddr?.start
+    const startMax = startAddr?.end
     const startNodes = isText ? [] : Array.from(range.startContainer.childNodes)
 
     const startIndex = isText
@@ -361,18 +362,22 @@ export class Jerry {
       : this.getNodeAddress(startNodes[range.startOffset]).start
     const start = Math.min(startIndex, startMax)
 
-    const endOffset = this.getNodeAddress(range.endContainer)?.start
-    const endMax = this.getNodeAddress(range.endContainer)?.end
+    const endAddr = this.getNodeAddress(range.endContainer)
+    const endOffset = endAddr?.start
+    const endMax = endAddr?.end
     const endNodes = isText ? [] : Array.from(range.endContainer.childNodes)
     const endIndex = isText
       ? range.endOffset + endOffset
       : this.getNodeAddress(endNodes[range.endOffset]).start
     const end = Math.min(endIndex, endMax)
+    if (range.startOffset === 0 && !range.startContainer.textContent) {
+      return new Address(this.root, start, end, 'neither')
+    }
     return new Address(
       this.root,
       start,
       end,
-      range.endOffset === 0 ? (range.startOffset === 0 ? 'neither' : 'right') : 'left'
+      range.startOffset === 0 ? 'right' : 'left'
     )
   }
 
