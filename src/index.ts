@@ -396,7 +396,7 @@ export class Jerry {
 
   drawHighlights(highlights: Address[]): DOMRect[] {
     if (_.isEmpty(highlights)) return []
-    const rects = _.flatMap(highlights, hl => Array.from(hl.getRects()))
+    const rects = _.flatMap(_.flatMap(highlights, hl => hl.toLeafs()), hl => Array.from(hl.getRects()))
     const articleRect = (this.root as Element).getBoundingClientRect()
     const shifted = rects.map(rect => new DOMRect(
       rect.x - articleRect.left,
