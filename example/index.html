@@ -23,9 +23,6 @@
         background: yellow;
         opacity: 0.5;
       }
-      .bold {
-        font-weight: bold;
-      }
       .headline {
         margin-top: 25px;
         display: flex;
@@ -60,7 +57,6 @@
       <div class='actions'>
         <div class='spacer'></div>
         <button id="highlight">Highlight Selection</button>
-        <button id="bold">Bold Selection</button>
         <button id="select">Select Highlights</button>
       </div>
     </header>
@@ -140,14 +136,6 @@
         console.log('highlighted', sel.highlight('highlight'))
         window.getSelection().empty()
         buildOverlay(jerry)
-      })
-
-      document.querySelector('#bold').addEventListener('mousedown', evt => {
-        const jerry = new jerrymander.Jerry()
-        const sel = jerry.getSelection()
-        if (sel.start === sel.end) return
-        console.log('bolded', sel.highlight('bold'))
-        window.getSelection().empty()
       })
 
       document.querySelector('#select').addEventListener('mousedown', evt => {
